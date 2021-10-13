@@ -39,6 +39,8 @@ class AStar(object):
               useful here
         """
         ########## Code starts here ##########
+
+        return self.occupancy.is_free(x)
         
         ########## Code ends here ##########
 
@@ -54,6 +56,8 @@ class AStar(object):
         HINT: This should take one line. Tuples can be converted to numpy arrays using np.array().
         """
         ########## Code starts here ##########
+
+        return np.linalg.norm(np.array(x1) - np.array(x2))
         
         ########## Code ends here ##########
 
@@ -87,6 +91,14 @@ class AStar(object):
         """
         neighbors = []
         ########## Code starts here ##########
+        
+        for i in range(-1, 2, 1):
+            for j in range(-1, 2, 1):
+                if i == 0 and j == 0:
+                    continue
+                neighbor = (x[0] + self.resolution*i, x[1] + self.resolution*j)
+                neighbors.append(self.snap_to_grid(neighbor))
+
         
         ########## Code ends here ##########
         return neighbors
@@ -152,6 +164,33 @@ class AStar(object):
                 set membership efficiently using the syntax "if item in set".
         """
         ########## Code starts here ##########
+
+        while self.open_set:
+            x_current = self.find_best_est_cost_through()
+            if x_current == self.x_goal:
+                self.path = self.reconstruct_path()
+                return True
+            self.open_set.remove(x_current)
+            self.closed_set.add(x_current)
+            for x_neighbor in self.get_neighbors(x_current):
+                if not self.is_free(x_neighbor):
+                    continue
+                if x_neighbor in self.closed_set:
+                    continue
+                
+                tentative_cost_to_arrive = self.cost_to_arrive[x_current] + self.distance(x_current, x_neighbor)
+
+                if x_neighbor not in self.open_set:
+                    self.open_set.add(x_neighbor)
+                    self.cost_to_arrive[x_neighbor] = tentative_cost_to_arrive
+                elif tentative_cost_to_arrive > self.cost_to_arrive[x_neighbor]:
+                    continue
+                
+                self.came_from[x_neighbor] = x_current
+                self.cost_to_arrive[x_neighbor] = tentative_cost_to_arrive
+                self.est_cost_through[x_neighbor] = tentative_cost_to_arrive + self.distance(x_neighbor, self.x_goal)
+        
+        return False
         
         ########## Code ends here ##########
 
@@ -180,8 +219,10 @@ class DetOccupancyGrid2D(object):
     def plot(self, fig_num=0):
         """Plots the space and its obstacles"""
         fig = plt.figure(fig_num)
+        
+        ax = fig.add_subplot(111, aspect='equal')
         for obs in self.obstacles:
-            ax = fig.add_subplot(111, aspect='equal')
+            
             ax.add_patch(
             patches.Rectangle(
             obs[0],

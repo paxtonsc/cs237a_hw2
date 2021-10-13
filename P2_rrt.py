@@ -56,6 +56,14 @@ class RRT(object):
             State (numpy vector) resulting from bounded steering
         """
         raise NotImplementedError("steer_towards must be overriden by a subclass of RRT")
+    
+    def buildPath(self, V, P, n):
+        path = []
+        while (n > 0):
+            path.append(V[n])
+            n = P[n]
+        
+        self.path = path.reverse()
 
     def solve(self, eps, max_iters=1000, goal_bias=0.05, shortcut=False):
         """
@@ -105,7 +113,33 @@ class RRT(object):
         #   - the order in which you pass in arguments to steer_towards and is_free_motion is important
 
         ########## Code starts here ##########
-        
+        for k in range(max_iters):
+            z = np.random.uniform()
+            if z < goal_bias:
+                x_rand = self.x_goal
+            else:
+                x_rand = np.random.uniform(self.statespace_lo, self.statespace_hi)
+            
+            x_near_index = self.find_nearest(V[:n], x_rand)
+            x_near = V[x_near_index]
+            x_new = self.steer_towards(x_near, x_rand, eps)
+
+            #print("x new, x near, x rand {} {} {}".format(x_new, x_near, x_rand))
+
+
+            if self.is_free_motion(self.obstacles, x_near, x_new):
+                V[n] = x_new
+                P[n] = x_near_index
+                if (x_new == self.x_goal).all():
+                    self.path = []
+                    while (n >= 0):
+                        self.path.append(V[n])
+                        n = P[n]
+                    self.path.reverse()
+                    success = True
+                    break
+                n+=1
+                
         ########## Code ends here ##########
 
         plt.figure()
@@ -143,6 +177,18 @@ class RRT(object):
             None, but should modify self.path
         """
         ########## Code starts here ##########
+        Success = False 
+
+        while not Success:
+            Success = True
+            for i, x in enumerate(self.path):
+                if i < 2 or i > len(self.path) - 2:
+                    continue
+
+                if self.is_free_motion(self.obstacles, self.path[i-1], self.path[i+1]):
+                    del self.path[i]
+                    Success = False
+
         
         ########## Code ends here ##########
 
@@ -156,13 +202,17 @@ class GeometricRRT(RRT):
         # Consult function specification in parent (RRT) class.
         ########## Code starts here ##########
         # Hint: This should take one line.
+        return np.argmin(np.linalg.norm(V - np.ones((V.shape)) * np.array(x), axis=1))
         
         ########## Code ends here ##########
+        pass
 
     def steer_towards(self, x1, x2, eps):
         # Consult function specification in parent (RRT) class.
         ########## Code starts here ##########
         # Hint: This should take one line.
+
+        return np.array(x1 + np.minimum(eps, np.linalg.norm(x2 - x1))*(x2-x1))
         
         ########## Code ends here ##########
 
@@ -203,6 +253,19 @@ class DubinsRRT(RRT):
         # HINT: The order of arguments for dubins.shortest_path() is important for DubinsRRT.
         import dubins
         ########## Code starts here ##########
+
+        shortest_path_length = 1000
+        shortest_path_index = 0
+
+        for i, point in enumerate(V):
+            path = dubins.shortest_path(point, x, self.turning_radius)
+            length = path.path_length()
+            if shortest_path_length > length:
+                shortest_path_index = i
+                shortest_path_length = length
+
+        return shortest_path_index
+
         
         ########## Code ends here ##########
 
@@ -219,6 +282,17 @@ class DubinsRRT(RRT):
         """
         # HINT: You may find the functions dubins.shortest_path(), d_path.path_length(), and d_path.sample_many() useful
         ########## Code starts here ##########
+         
+
+        path = dubins.shortest_path(x1, x2, 1.001*self.turning_radius)
+
+        pts = list(path.sample_many(eps))
+        pts.append(x2)
+        #print("PTS: ", pts)
+        assert(len(list(pts))>1)
+        return pts[1]
+
+
         
         ########## Code ends here ##########
 
