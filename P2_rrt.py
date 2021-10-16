@@ -205,7 +205,6 @@ class GeometricRRT(RRT):
         return np.argmin(np.linalg.norm(V - np.ones((V.shape)) * np.array(x), axis=1))
         
         ########## Code ends here ##########
-        pass
 
     def steer_towards(self, x1, x2, eps):
         # Consult function specification in parent (RRT) class.
@@ -285,13 +284,12 @@ class DubinsRRT(RRT):
          
 
         path = dubins.shortest_path(x1, x2, 1.001*self.turning_radius)
-
         pts = list(path.sample_many(eps))
-        pts.append(x2)
-        #print("PTS: ", pts)
-        assert(len(list(pts))>1)
-        return pts[1]
 
+        # append x2. that way if x2 is closer than eps, x2 gets returned
+        pts[0].append(x2)
+
+        return pts[0][1]
 
         
         ########## Code ends here ##########
