@@ -39,6 +39,10 @@ class AStar(object):
               useful here
         """
         ########## Code starts here ##########
+        if x[0] < self.statespace_lo[0] or x[1] > self.statespace_hi[0]:
+            return False
+        if x[1] < self.statespace_lo[1] or x[1] > self.statespace_hi[1]:
+            return False
 
         return self.occupancy.is_free(x)
         
@@ -97,7 +101,8 @@ class AStar(object):
                 if i == 0 and j == 0:
                     continue
                 neighbor = (x[0] + self.resolution*i, x[1] + self.resolution*j)
-                neighbors.append(self.snap_to_grid(neighbor))
+                if self.is_free(self.snap_to_grid(neighbor)):
+                    neighbors.append(self.snap_to_grid(neighbor))
 
         
         ########## Code ends here ##########

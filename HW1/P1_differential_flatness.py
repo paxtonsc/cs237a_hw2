@@ -270,8 +270,6 @@ def compute_traj_with_limits(z_0, z_f, tf, N, V_max, om_max):
     t, traj = compute_traj(coeffs=coeffs, tf=tf, N=N)
     V,om = compute_controls(traj=traj)
     s = compute_arc_length(V, t)
-    print("average velocity {}".format(np.average(V)))
-    print("length {}".format(s[-1]))
     V_tilde = rescale_V(V, om, V_max, om_max)
     tau = compute_tau(V_tilde, s)
     om_tilde = rescale_om(V, om, V_tilde)

@@ -211,7 +211,7 @@ class GeometricRRT(RRT):
         ########## Code starts here ##########
         # Hint: This should take one line.
 
-        return np.array(x1 + np.minimum(eps, np.linalg.norm(x2 - x1))*(x2-x1))
+        return np.array(x1 + np.minimum(eps, np.linalg.norm(x2 - x1))*(x2-x1)/np.linalg.norm(x2-x1))
         
         ########## Code ends here ##########
 

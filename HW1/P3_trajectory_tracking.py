@@ -68,12 +68,14 @@ class TrajectoryTracker:
 
         delta_V = dt * (np.cos(th)*u1 + np.sin(th)*u2)
 
-        om = -np.sin(th)*u1/V + np.cos(th)*u2/V
 
-        V += delta_V 
 
         if np.abs(V) < V_PREV_THRES:
             V = np.sqrt(xd_d**2 + yd_d**2)
+        
+        om = -np.sin(th)*u1/V + np.cos(th)*u2/V
+
+        V += delta_V 
         ########## Code ends here ##########
 
         # apply control limits
